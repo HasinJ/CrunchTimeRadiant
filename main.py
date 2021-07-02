@@ -17,7 +17,7 @@ class CrunchTime(config):
         super().__init__()
         self.driver = driver
         self.driver.get('https://dbi1497.net-chef.com/ncext/index.ct')
-        self._wait = WebDriverWait(self.driver,3)
+        self._wait = WebDriverWait(self.driver,5)
         self._LL4PC = LinkedList() #PC linked list to count down arrows and reaching end
 
     def printCurrentPage(self):
@@ -48,11 +48,11 @@ class CrunchTime(config):
     def choosePC(self):
         element = self._wait.until(EC.element_to_be_clickable((By.TAG_NAME, "input")))
         time.sleep(1)
-        element.send_keys(Keys.DOWN)
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
         time.sleep(1)
-        element.send_keys(Keys.ENTER)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(1)
-        element.send_keys(Keys.ENTER)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(4)
 
 class MenuMix(CrunchTime):
@@ -61,9 +61,20 @@ class MenuMix(CrunchTime):
 
     def gotoSales(self):
         self.driver.get("https://dbi1497.net-chef.com/ncext/next.ct#MenuMixSummary")
+
         self._wait.until(EC.presence_of_element_located((By.XPATH, f"//*[text()='Product Number']")))
         parent = self._wait.until(EC.presence_of_element_located((By.XPATH, f"//*[@ces-selenium-id='griddockpanel']")))
-        parent.find_element_by_tag_name('input')
+        input = parent.find_element_by_tag_name('input')
+        input.clear()
+        ActionChains(self.driver).move_to_element(input).click().perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+
+        btn = parent.find_element_by_tag_name('a')
+        ActionChains(self.driver).move_to_element(btn).click().perform()
+
         time.sleep(4)
         #self.printCurrentPage()
 
