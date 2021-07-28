@@ -8,6 +8,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from config import config
 from ds import Node, LinkedList
+
+from dateutil.relativedelta import relativedelta
 import datetime
 import time
 
@@ -75,14 +77,90 @@ class MenuMix(CrunchTime):
         btn = parent.find_element_by_tag_name('a')
         ActionChains(self.driver).move_to_element(btn).click().perform()
 
-        time.sleep(4)
+        time.sleep(1)
         #self.printCurrentPage()
 
 
+def get_past_date(str_days_ago,end=None):
+    if end: TODAY = end
+    else: TODAY = datetime.date.today()
+
+    splitted = str_days_ago.split()
+    if len(splitted) == 1 and splitted[0].lower() == 'today':
+        return TODAY
+    elif len(splitted) == 1 and splitted[0].lower() == 'yesterday':
+        date = TODAY - relativedelta(days=1)
+        return date
+    elif splitted[1].lower() in ['day', 'days', 'd']:
+        date = TODAY - relativedelta(days=int(splitted[0]))
+        return date
+    else:
+        return "Wrong Argument format"
+
+def today(dates):
+	dates["days"]=1
+	hour = int(datetime.datetime.now().strftime('%H'))
+
+	if hour >= 23: #the half of the day
+		dates["start"] = get_past_date('today').strftime("%m/%d/%Y")
+		print(f"Auto date: use today's date\n{dates['start']}")
+
+	elif hour < 23: #the other half of the day
+		dates["start"] = get_past_date('yesterday').strftime("%m/%d/%Y")
+		print(f"Auto date: use yesterday's date\n{dates['start']}")
+
+	return dates
+
+
+def handleDates(dates):
+
+	if dates["start"]==dates["end"] and (dates["start"]==None or dates["start"]==datetime.datetime.now().strftime('%x')): dates=today(dates)
+
+	elif (dates["start"]==None and dates["end"]!=None) or (dates["start"]!=None and dates["end"]==None):
+		raise ValueError('Both dates need to be filled out, to choose one day:  dates = {"start": "7/28/2021", "end": "7/28/2021", "days":0}', dates["start"], dates["end"])
+
+	else:
+		print(f"Custom dates:\nFrom: {dates['start']} To: {dates['end']}")
+		start = datetime.datetime.strptime(dates["start"], '%m/%d/%Y')
+		end = datetime.datetime.strptime(dates["end"], '%m/%d/%Y')
+
+		if not "days" in dates:
+			dates["days"] = int(end.strftime("%j")) - int(start.strftime("%j"))
+			dates["start"] = start.strftime("%m/%d/%Y")
+			dates["end"] = end.strftime("%m/%d/%Y")
+		else:
+			dates["start"] = get_past_date(f'{dates["days"]} days ago', end).strftime("%m/%d/%Y")
+
+
+
+
 if __name__=="__main__":
-    root = webdriver.Chrome(executable_path=r"C:\Program Files (x86)\chromedriver.exe")
-    task = MenuMix(root)
-    task.login()
-    task.choosePC()
-    task.gotoSales()
-    task.driver.quit()
+
+	## dates are ALL INCLUSIVE
+	## get the amount of digits for month, day, and year correct (2 for month and day, 4 for year, probably)
+	## one year at a time
+	##
+	## examples:
+	## to choose one day:        dates = {"start": "07/28/2021", "end": "07/28/2021"}
+	## to choose multiple days:  dates = {"start": "07/01/2021", "end": "07/31/2021"} (chooses all 31 days)
+
+	dates = {"start": "07/01/2020", "end": "07/31/2021"}
+	try: handleDates(dates)
+	except ValueError as err:
+		print(err.args)
+		exit()
+
+
+	while dates["days"] >= 0:
+		print(dates,"\n")
+		'''
+		root = webdriver.Chrome(executable_path=r".\chromedriver.exe")
+		task = MenuMix(root)
+		task.login()
+		task.choosePC()
+		task.gotoSales()
+		task.driver.quit()
+		'''
+
+		dates["days"]-=1
+		if dates["days"] >= 0: handleDates(dates)
