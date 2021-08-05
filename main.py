@@ -98,7 +98,7 @@ def get_past_date(str_days_ago,end=None):
         return "Wrong Argument format"
 
 def today(dates):
-	dates["days"]=1
+	dates["days"]=0
 	hour = int(datetime.datetime.now().strftime('%H'))
 
 	if hour >= 23: #the half of the day
@@ -144,7 +144,7 @@ if __name__=="__main__":
 	## to choose one day:        dates = {"start": "07/28/2021", "end": "07/28/2021"}
 	## to choose multiple days:  dates = {"start": "07/01/2021", "end": "07/31/2021"} (chooses all 31 days)
 
-	dates = {"start": "07/01/2020", "end": "07/31/2021"}
+	dates = {"start": None, "end": None}
 	try: handleDates(dates)
 	except ValueError as err:
 		print(err.args)
@@ -153,14 +153,14 @@ if __name__=="__main__":
 
 	while dates["days"] >= 0:
 		print(dates,"\n")
-		'''
+		
 		root = webdriver.Chrome(executable_path=r".\chromedriver.exe")
 		task = MenuMix(root)
 		task.login()
 		task.choosePC()
 		task.gotoSales()
 		task.driver.quit()
-		'''
+		
 
 		dates["days"]-=1
 		if dates["days"] >= 0: handleDates(dates)
