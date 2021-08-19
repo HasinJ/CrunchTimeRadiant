@@ -162,5 +162,6 @@ if __name__=="__main__":
 		task.gotoSales()
 		task.driver.quit()
 
+
 		dates["days"]-=1
 		if dates["days"] >= 0: handleDates(dates)
