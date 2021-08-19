@@ -19,7 +19,7 @@ class CrunchTime(config):
         super().__init__()
         self.driver = driver
         self.driver.get('https://dbi1497.net-chef.com/ncext/index.ct')
-        self._wait = WebDriverWait(self.driver,5)
+        self._wait = WebDriverWait(self.driver,10)
         self._LL4PC = LinkedList() #PC linked list to count down arrows and reaching end
 
     def printCurrentPage(self):
@@ -48,7 +48,7 @@ class CrunchTime(config):
         self.clickByText("Sign In")
 
     def choosePC(self):
-        element = self._wait.until(EC.element_to_be_clickable((By.TAG_NAME, "input")))
+        element = self._wait.until(EC.presence_of_element_located((By.TAG_NAME, "input")))
         time.sleep(1)
         ActionChains(self.driver).send_keys(Keys.DOWN).perform()
         time.sleep(1)
@@ -98,7 +98,7 @@ def get_past_date(str_days_ago,end=None):
         return "Wrong Argument format"
 
 def today(dates):
-	dates["days"]=1
+	dates["days"]=0
 	hour = int(datetime.datetime.now().strftime('%H'))
 
 	if hour >= 23: #the half of the day
@@ -117,7 +117,7 @@ def handleDates(dates):
 	if dates["start"]==dates["end"] and (dates["start"]==None or dates["start"]==datetime.datetime.now().strftime('%x')): dates=today(dates)
 
 	elif (dates["start"]==None and dates["end"]!=None) or (dates["start"]!=None and dates["end"]==None):
-		raise ValueError('Both dates need to be filled out, to choose one day:  dates = {"start": "7/28/2021", "end": "7/28/2021", "days":0}', dates["start"], dates["end"])
+		raise ValueError('Both dates need to be filled out, to choose one day:  dates = {"start": "7/28/2021", "end": "7/28/2021"}', dates["start"], dates["end"])
 
 	else:
 		print(f"Custom dates:\nFrom: {dates['start']} To: {dates['end']}")
@@ -136,15 +136,16 @@ def handleDates(dates):
 
 if __name__=="__main__":
 
-	## dates are ALL INCLUSIVE
+	## ALL DATES INCLUSIVE
 	## get the amount of digits for month, day, and year correct (2 for month and day, 4 for year, probably)
 	## one year at a time
 	##
 	## examples:
 	## to choose one day:        dates = {"start": "07/28/2021", "end": "07/28/2021"}
 	## to choose multiple days:  dates = {"start": "07/01/2021", "end": "07/31/2021"} (chooses all 31 days)
+	## for normal runs:			 dates = {"start": None, "end": None}
 
-	dates = {"start": "07/01/2020", "end": "07/31/2021"}
+	dates = {"start": None, "end": None}
 	try: handleDates(dates)
 	except ValueError as err:
 		print(err.args)
@@ -153,14 +154,13 @@ if __name__=="__main__":
 
 	while dates["days"] >= 0:
 		print(dates,"\n")
-		'''
+
 		root = webdriver.Chrome(executable_path=r".\chromedriver.exe")
 		task = MenuMix(root)
 		task.login()
 		task.choosePC()
 		task.gotoSales()
 		task.driver.quit()
-		'''
 
 		dates["days"]-=1
 		if dates["days"] >= 0: handleDates(dates)
