@@ -5,6 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from pathlib import Path
+import shutil
 
 from config import config
 from ds import Node, LinkedList
@@ -22,7 +24,21 @@ class CrunchTime(config):
         self.driver = driver
         self.driver.get('https://dbi1497.net-chef.com/ncext/index.ct')
         self._wait = WebDriverWait(self.driver, 10)
-        self._LL4PC = LinkedList()  # PC linked list to count down arrows and reaching end
+        self.LL4PC = LinkedList()  # PC linked list to count down arrows and reaching end
+
+    def checkFolders(self, date):
+        date = date.replace("/",".") # for folder use
+        filepaths = [
+            Path(f'./data'),
+            Path(f'./data/MenuMix'),
+            Path(f'./data/{self.LL4PC.head.PC}'),
+            Path(f'./data/{self.LL4PC.head.PC}/{date}'),
+        ]
+
+        for dir in filepaths:
+            if not (dir.exists()): dir.mkdir(parents=True, exist_ok=False)
+
+        self.filepath = filepaths[-1] / f"MenuMix-{date}" # folder for downlaoding (for now)
 
     def printCurrentPage(self):
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
@@ -63,7 +79,7 @@ class CrunchTime(config):
         time.sleep(1)
         element = self._wait.until(
             EC.presence_of_element_located((By.TAG_NAME, "input")))
-        self._LL4PC.insertBeginning(Node(element.get_property("value")))
+        self.LL4PC.insertBeginning(Node(element.get_property("value")))
         time.sleep(1)
         ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(4)
@@ -73,6 +89,35 @@ class MenuMix(CrunchTime):
     def __init__(self, driver, dates):
         super().__init__(driver)
         self.dates = dates
+
+    def download(self):
+        printbtn = self._wait.until(EC.presence_of_element_located((By.XPATH, f"//*[@ces-selenium-id='gridexport_print']")))
+        printbtn.click()
+        time.sleep(2)
+
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+        time.sleep(2)
+
+        counter = 0
+        while not len(list(downloadPath.glob("MenuMix_*.csv"))):
+            time.sleep(1)
+            if counter==10:
+                print("ERRORRRRRR")
+                break #throw error
+            counter+=1
+
+        self.tempFile = list(downloadPath.glob("MenuMix_*.csv"))[0]
+
+        if self.filepath.exists(): self.filepath.unlink()
+        shutil.move(self.tempFile, self.filepath)
 
     def gotoSales(self):
         self.driver.get(
@@ -93,7 +138,7 @@ class MenuMix(CrunchTime):
         ActionChains(self.driver).move_to_element(btn).click().perform()
 
         time.sleep(5)
-        print("",self._LL4PC)
+        print("",self.LL4PC)
 
 
 def get_past_date(str_days_ago, end=None):
@@ -155,9 +200,9 @@ def handleDates(dates):
 if __name__ == "__main__":
 
     # ALL DATES INCLUSIVE
-    # autopep8 -i my_file.py in case tabs are inconsistent
+    # autopep8 -i my_file.py in case tabs are inconsistent in command prompt
     # get the amount of digits for month, day, and year correct (2 for month and day, 4 for year, probably)
-    # one year at a time
+    # ONE YEAR at a time
     ##
     # examples:
     # to choose one day:        dates = {"start": "07/28/2021", "end": "07/28/2021"}
@@ -171,19 +216,29 @@ if __name__ == "__main__":
         print(err.args)
         exit()
 
+    # download path
+    downloadPath = Path.cwd() / ".temp"
+    if not downloadPath.exists(): downloadPath.mkdir(parents=True, exist_ok=False)
+    newOptions = webdriver.ChromeOptions()
+    newOptions.add_experimental_option("prefs", {"download.default_directory" : (downloadPath).__str__() } );
+
     while dates["days"] >= 0:
         print(dates, "\n")
 
-        root = webdriver.Chrome(executable_path=r".\chromedriver.exe")
+        root = webdriver.Chrome(executable_path = r".\chromedriver.exe", options = newOptions)
+
         selenium = MenuMix(root, dates)
         selenium.login()
         selenium.choosePC()
         selenium.gotoSales()
+        selenium.checkFolders(dates["start"])
+        selenium.download()
 
         # scrape
 
         # selenium.printCurrentPage()
         selenium.driver.quit()
+        #selenium.deleteTemp()
 
         dates["days"] -= 1
         if dates["days"] >= 0:
