@@ -13,18 +13,23 @@ class Node:
 class LinkedList:
     def __init__(self):
         self.head = None
-        self.end = None
+        self.current = None
 
     def insertBeginning(self, node):
-        if not self.head: #pointer at the end to signify last pc
+        if not self.head:
             node.count = 1
             self.head = node
-            self.end = node
             return
 
         node.count = self.head.count + 1
         node.next = self.head
         self.head = node
+        self.current = self.head
+
+    def pop(self):
+        temp = self.head
+        self.head = self.head.next
+        return temp
 
     #def __repr__(self):
        #pass
@@ -32,7 +37,7 @@ class LinkedList:
     def __str__(self):
         current = self.head
         while current is not None:
-            print(f"{current.count} : {current.PC}")
+            print(f"#{current.count} : {current.PC}")
             current=current.next
         return ""
 
