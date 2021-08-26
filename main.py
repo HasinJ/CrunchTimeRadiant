@@ -69,17 +69,39 @@ class CrunchTime(config):
 
         self.clickByText("Sign In")
 
-    def choosePC(self):
-        element = self._wait.until(
-            EC.presence_of_element_located((By.TAG_NAME, "input")))
+    def changePCOption(self):
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
         time.sleep(1)
         ActionChains(self.driver).send_keys(Keys.DOWN).perform()
         time.sleep(1)
         ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(1)
-        element = self._wait.until(
-            EC.presence_of_element_located((By.TAG_NAME, "input")))
+        return self._wait.until(EC.presence_of_element_located((By.TAG_NAME, "input")))
+
+    def choosePC(self):
+        # get first pc number (do-while start)
+        element = self._wait.until(EC.presence_of_element_located((By.TAG_NAME, "input")))
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.DOWN).perform()
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+        time.sleep(1)
+        element = self._wait.until(EC.presence_of_element_located((By.TAG_NAME, "input")))
         self.LL4PC.insertBeginning(Node(element.get_property("value")))
+
+        element = self.changePCOption()
+
+        # continue getting the rest of the PCs
+        while element.get_property("value") != self.LL4PC.head.PC:
+            self.LL4PC.insertBeginning(Node(element.get_property("value")))
+            element = self.changePCOption()
+
+        print("",self.LL4PC)
+        element.clear()
+        time.sleep(0.5)
+        element.send_keys(self.LL4PC.current.PC)
+        time.sleep(1)
+        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(1)
         ActionChains(self.driver).send_keys(Keys.ENTER).perform()
         time.sleep(4)
@@ -107,7 +129,7 @@ class MenuMix(CrunchTime):
         time.sleep(2)
 
         counter = 0
-        while not len(list(downloadPath.glob("MenuMix_*.csv"))):
+        while not len(list(downloadPath.glob("MenuMix_*.csv"))): #wait until it downloads for 10 seconds
             time.sleep(1)
             if counter==10:
                 print("ERRORRRRRR")
@@ -138,7 +160,7 @@ class MenuMix(CrunchTime):
         ActionChains(self.driver).move_to_element(btn).click().perform()
 
         time.sleep(5)
-        print("",self.LL4PC)
+
 
 
 def get_past_date(str_days_ago, end=None):
